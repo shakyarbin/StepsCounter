@@ -4,117 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Step Counter</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="stats-card">
-            <div class="header">
+        <header>
+            <h1>Home</h1>
+        </header>
+
+        <div class="progress-ring">
+            <div class="step-count">
+                <span id="steps">0</span>
+                <p>Total steps</p>
+            </div>
+            <svg class="progress" width="300" height="300">
+                <defs>
+                    <linearGradient id="gradient" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" style="stop-color:#FF2D55"/>
+                        <stop offset="20%" style="stop-color:#FF9500"/>
+                        <stop offset="40%" style="stop-color:#FFCC00"/>
+                        <stop offset="60%" style="stop-color:#34C759"/>
+                        <stop offset="80%" style="stop-color:#00C7BE"/>
+                        <stop offset="100%" style="stop-color:#007AFF"/>
+                    </linearGradient>
+                </defs>
+                <circle class="progress-ring-background" cx="150" cy="150" r="140"/>
+                <circle class="progress-ring-circle" cx="150" cy="150" r="140"/>
+            </svg>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span id="distance">0</span>
+                <p>km</p>
+            </div>
+            <div class="stat-item">
+                <span id="calories">0</span>
+                <p>kcal</p>
+            </div>
+            <div class="stat-item">
+                <span id="duration">0</span>
+                <p>min</p>
+            </div>
+        </div>
+
+        <div class="map-section">
+            <div class="map-container">
+                <div class="path">
+                    <div class="marker start-marker"></div>
+                    <div class="progress-line">
+                        <div id="pointer"></div>
+                    </div>
+                    <div class="marker end-marker"></div>
+                </div>
+                <div class="labels">
+                    <span>START</span>
+                    <span>FINISH</span>
+                </div>
+            </div>
+        </div>
+
+        <button id="startBtn" class="start-button">START</button>
+
+        <nav class="bottom-nav">
+            <a href="#" class="active">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 3L4 9v12h16V9l-8-6z"/>
+                </svg>
                 <span>Home</span>
-                <div class="menu-container">
-                    <button class="menu-btn" aria-label="Menu">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div class="menu-dropdown">
-                        <button class="menu-item" id="resetBtn">
-                            <i class="fas fa-redo"></i>
-                            Reset Steps
-                        </button>
-                        <button class="menu-item" id="deleteBtn">
-                            <i class="fas fa-trash"></i>
-                            Delete All
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="step-circle">
-                <div class="step-count">
-                    <span id="stepCount">0</span>
-                    <small>Total steps</small>
-                </div>
-            </div>
-            <div class="metrics">
-                <div class="metric">
-                    <span class="value" id="distanceValue">0</span>
-                    <span class="label">km</span>
-                </div>
-                <div class="metric">
-                    <span class="value" id="caloriesValue">0</span>
-                    <span class="label">kcal</span>
-                </div>
-                <div class="metric">
-                    <span class="value" id="timeValue">0</span>
-                    <span class="label">min</span>
-                </div>
-            </div>
-            <div class="map-block">
-                <div class="map-grid">
-                    <div class="grid-lines"></div>
-                </div>
-                <div class="track-container">
-                    <div class="track-path">
-                        <svg viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet">
-                            <defs>
-                                <linearGradient id="pathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#FF9500"/>
-                                    <stop offset="100%" style="stop-color:#FF2D55"/>
-                                </linearGradient>
-                            </defs>
-                            <path class="track" d="M20,75 C50,75 60,30 100,30 S150,120 200,120 S250,30 280,75" />
-                            <path class="progress" d="M20,75 C50,75 60,30 100,30 S150,120 200,120 S250,30 280,75" />
-                        </svg>
-                        <div class="track-dot"></div>
-                    </div>
-                    <div class="track-labels">
-                        <div class="start-point">START</div>
-                        <div class="end-point">
-                            <span>FINISH</span>
-                            <span class="flag">🚩</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button id="startBtn">START</button>
-        </div>
-        
-        <div class="nav-bar">
-            <button class="nav-btn active">
-                <span class="icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                </span>
-                Home
-            </button>
-            <button class="nav-btn" onclick="window.location.href='report.html'">
-                <span class="icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                </span>
-                Report
-            </button>
-            <button class="nav-btn" onclick="window.location.href='link.com'">
-                <span class="icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 6h18M3 12h18M3 18h18M12 3v18"/>
-                        <circle cx="12" cy="12" r="4"/>
-                    </svg>
-                </span>
-                Calories
-            </button>
-        </div>
+                <div class="active-dot"></div>
+            </a>
+            <a href="stats.html">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M4 20h16V4H4v16zm2-14h12v12H6V6zm2 8h2v2H8v-2zm4-4h2v6h-2v-6zm4 2h2v4h-2v-4z"/>
+                </svg>
+                <span>Report</span>
+            </a>
+            <a href="#">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M13.5 3l-1.5 4h3l-1.5-4zM8 9l-3 1.5 3 1.5v-3zm8 0v3l3-1.5-3-1.5zm-6 7l1.5 4 1.5-4h-3zm4.5 0l-1.5 4 1.5-4h-3z"/>
+                </svg>
+                <span>Calories</span>
+            </a>
+        </nav>
     </div>
-    <script src="app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            window.stepTracker = new StepTracker();
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html> 

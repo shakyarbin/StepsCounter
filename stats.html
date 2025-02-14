@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step Counter Stats</title>
+    <link rel="stylesheet" href="stats-style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Activity Statistics</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon">🔥</div>
+                <h3>Move</h3>
+                <div class="stat-value"><span id="calories">0</span>/800</div>
+                <div class="unit">CAL</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon">🏃</div>
+                <h3>Exercise</h3>
+                <div class="stat-value"><span id="duration">0</span>/30</div>
+                <div class="unit">MIN</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon">👣</div>
+                <h3>Steps</h3>
+                <div class="stat-value"><span id="steps">0</span></div>
+                <div class="unit">STEPS</div>
+            </div>
+        </div>
+
+        <div class="additional-stats">
+            <div class="stat-row">
+                <span>Distance Covered</span>
+                <span id="distance">0 km</span>
+            </div>
+            <div class="stat-row">
+                <span>Average Pace</span>
+                <span id="pace">0 min/km</span>
+            </div>
+        </div>
+
+        <a href="index.html" class="back-button">Back to Counter</a>
+    </div>
+    <script src="stats-script.js"></script>
+</body>
+</html> 
