@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "expo-sensors": "^14.0.2",
+    "react-native-svg": "^15.11.1"
+  }
+}

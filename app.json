@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-sensors",
+        {
+          "accelerometer": true
+        }
+      ]
+    ]
+  }
+} 
