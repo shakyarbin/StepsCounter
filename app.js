@@ -319,7 +319,7 @@ class StepTracker {
         const track = document.querySelector('.track');
         if (!progress || !trackDot || !track) return;
         
-        const totalStepsToFinish = 1000; // Increased for smoother movement
+        const totalStepsToFinish = 100; // Decreased from 1000 to 300 steps
         const progressValue = Math.min(this.steps / totalStepsToFinish, 1);
         
         // Get the total length of the path
@@ -539,10 +539,10 @@ class StepTracker {
             }
         });
         
-        // Update player position
+        // Update player position with new step count
         const playerItem = Array.from(leaderboardItems).find(item => item.classList.contains('player'));
         if (playerItem) {
-            const progressValue = this.steps / 1000; // Using same total steps as progress
+            const progressValue = this.steps / 300; // Updated to match new total steps
             if (progressValue >= 1) {
                 playerItem.classList.add('finished');
                 playerItem.querySelector('.time').textContent = `${currentTime}s`;
