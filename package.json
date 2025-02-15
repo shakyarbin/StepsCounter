@@ -1,6 +1,24 @@
 {
+  "name": "stepscounter---copy",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shakyarbin/Steps1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shakyarbin/Steps1/issues"
+  },
+  "homepage": "https://github.com/shakyarbin/Steps1#readme",
+  "description": "",
   "dependencies": {
-    "expo-sensors": "^14.0.2",
-    "react-native-svg": "^15.11.1"
+    "ws": "^8.18.0"
   }
 }

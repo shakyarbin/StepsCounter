@@ -5,6 +5,107 @@ class ReportPage {
         this.updateDate();
         this.updateActivityRings();
         this.loadActivityData();
+        this.initializeResetButton();
+    }
+
+    initializeResetButton() {
+        const resetBtn = document.querySelector('.reset-btn-report');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (confirm('Reset all activity stats and charts to zero? This action cannot be undone.')) {
+                    // Clear only report-related data
+                    localStorage.removeItem('hourlyStepsData');
+                    localStorage.removeItem('activityRings');
+                    localStorage.removeItem('healthMetrics');
+                    localStorage.removeItem('trends');
+                    
+                    // Reset activity rings
+                    const rings = document.querySelector('.rings');
+                    if (rings) {
+                        rings.innerHTML = `
+                            <svg viewBox="0 0 100 100">
+                                <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                                <circle class="ring-progress move-ring" cx="50" cy="50" r="40" 
+                                    style="stroke-dasharray: 0, 251"/>
+                                <circle class="ring-bg" cx="50" cy="50" r="35"/>
+                                <circle class="ring-progress exercise-ring" cx="50" cy="50" r="35"
+                                    style="stroke-dasharray: 0, 220"/>
+                                <circle class="ring-bg" cx="50" cy="50" r="30"/>
+                                <circle class="ring-progress stand-ring" cx="50" cy="50" r="30"
+                                    style="stroke-dasharray: 0, 188"/>
+                            </svg>
+                        `;
+                    }
+                    
+                    // Reset ring stats
+                    document.getElementById('moveValue').innerHTML = '0/800<small>CAL</small>';
+                    document.getElementById('exerciseValue').innerHTML = '0/30<small>MIN</small>';
+                    document.getElementById('standValue').innerHTML = '0/12<small>HRS</small>';
+                    
+                    // Reset trends
+                    const trends = [
+                        { label: 'Stand', value: '0/12 HR/DAY', trend: 'down' },
+                        { label: 'Exercise', value: '0 MIN/DAY', trend: 'down' },
+                        { label: 'Distance', value: '0.00 KM/DAY', trend: 'down' },
+                        { label: 'Walking Pace', value: '0.0 KM/H', trend: 'down' }
+                    ];
+                    
+                    const trendGrid = document.querySelector('.trends-grid');
+                    trendGrid.innerHTML = trends.map(trend => `
+                        <div class="trend-item">
+                            <div class="trend-icon ${trend.trend}">
+                                <i class="fas fa-arrow-${trend.trend}"></i>
+                            </div>
+                            <div class="trend-info">
+                                <span class="trend-label">${trend.label}</span>
+                                <span class="trend-value">${trend.value}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // Show feedback
+                    this.showFeedback('Activity stats and charts reset to zero');
+                    
+                    // Reinitialize charts with empty data
+                    this.initializeCharts();
+                }
+            });
+        }
+    }
+
+    showFeedback(message) {
+        const feedback = document.createElement('div');
+        feedback.className = 'feedback-toast';
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+        
+        // Add styles dynamically
+        feedback.style.position = 'fixed';
+        feedback.style.bottom = '100px';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translateX(-50%) translateY(100px)';
+        feedback.style.backgroundColor = '#2c2c2e';
+        feedback.style.color = '#ffffff';
+        feedback.style.padding = '12px 24px';
+        feedback.style.borderRadius = '25px';
+        feedback.style.fontSize = '14px';
+        feedback.style.opacity = '0';
+        feedback.style.transition = 'all 0.3s ease';
+        feedback.style.zIndex = '2000';
+        feedback.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+        
+        // Trigger animation
+        setTimeout(() => {
+            feedback.style.opacity = '1';
+            feedback.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        
+        // Remove after animation
+        setTimeout(() => {
+            feedback.style.opacity = '0';
+            feedback.style.transform = 'translateX(-50%) translateY(100px)';
+            setTimeout(() => feedback.remove(), 300);
+        }, 2000);
     }
 
     updateDate() {
@@ -15,25 +116,98 @@ class ReportPage {
     }
 
     loadData() {
-        // Load data from localStorage
-        this.reportData = JSON.parse(localStorage.getItem('stepCounterData')) || {
-            weeklySteps: [0, 0, 0, 0, 0, 0, 0],
-            dailySpeeds: [],
-            totalSteps: 0
-        };
+        // Get step data from localStorage
+        const stepData = JSON.parse(localStorage.getItem('stepCounterData')) || { steps: 0 };
+        const hourlyData = JSON.parse(localStorage.getItem('hourlyStepsData')) || {};
+        const today = new Date().toDateString();
+        const todayData = hourlyData[today] || {};
+        
+        // Calculate weekly stats
+        const weeklySteps = this.calculateWeeklyStats(hourlyData);
+        const weeklyAvg = Math.round(weeklySteps.reduce((a, b) => a + b, 0) / 7);
+        const bestDay = Math.max(...weeklySteps);
+        
+        // Calculate active time (minutes with steps > 0)
+        const activeMinutes = Object.values(todayData).filter(steps => steps > 0).length * 60;
+        
+        // Calculate calories
+        const totalCalories = Math.round(stepData.steps * 0.04);
+        
+        // Update summary widgets
+        document.getElementById('weeklyAvgSteps').textContent = weeklyAvg.toLocaleString();
+        document.getElementById('bestDaySteps').textContent = bestDay.toLocaleString();
+        document.getElementById('activeTime').textContent = activeMinutes;
+        document.getElementById('totalCalories').textContent = totalCalories;
 
-        const state = JSON.parse(localStorage.getItem('stepCounterState')) || {
-            steps: 0,
-            isTracking: false
-        };
+        // Calculate metrics
+        const distance = (stepData.steps * 0.0007).toFixed(2); // km
+        const minutes = Math.round(stepData.steps * 0.0166);
+        const hours = Math.round(minutes / 60);
 
-        // Update step count and distance
-        document.querySelector('.stat-value').textContent = state.steps.toLocaleString();
-        const distance = (state.steps * 0.0007).toFixed(2);
-        document.querySelectorAll('.stat-value')[1].innerHTML = `${distance}<small>MI</small>`;
+        // Update activity rings
+        const movePercent = Math.min((totalCalories / 800) * 100, 100);
+        const exercisePercent = Math.min((minutes / 30) * 100, 100);
+        const standPercent = Math.min((hours / 12) * 100, 100);
 
-        this.updateTrends();
-        this.updateSummary();
+        // Update ring stats
+        document.querySelector('.ring-stat:nth-child(1) .value').innerHTML = 
+            `${totalCalories}/800<small>CAL</small>`;
+        document.querySelector('.ring-stat:nth-child(2) .value').innerHTML = 
+            `${minutes}/30<small>MIN</small>`;
+        document.querySelector('.ring-stat:nth-child(3) .value').innerHTML = 
+            `${hours}/12<small>HRS</small>`;
+
+        // Update rings visualization
+        const rings = document.querySelector('.rings');
+        if (rings) {
+            rings.innerHTML = `
+                <svg viewBox="0 0 100 100">
+                    <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                    <circle class="ring-progress move-ring" cx="50" cy="50" r="40" 
+                        style="stroke-dasharray: ${movePercent * 2.51}, 251"/>
+                    <circle class="ring-bg" cx="50" cy="50" r="35"/>
+                    <circle class="ring-progress exercise-ring" cx="50" cy="50" r="35"
+                        style="stroke-dasharray: ${exercisePercent * 2.20}, 220"/>
+                    <circle class="ring-bg" cx="50" cy="50" r="30"/>
+                    <circle class="ring-progress stand-ring" cx="50" cy="50" r="30"
+                        style="stroke-dasharray: ${standPercent * 1.88}, 188"/>
+                </svg>
+            `;
+        }
+
+        // Update step stats
+        document.getElementById('stepCount').textContent = stepData.steps.toLocaleString();
+        document.getElementById('stepDistance').textContent = distance;
+
+        // Update trends
+        this.updateTrends({
+            steps: stepData.steps,
+            distance,
+            minutes,
+            hours,
+            calories: totalCalories
+        });
+    }
+
+    calculateWeeklyStats(hourlyData) {
+        const weeklySteps = [];
+        const today = new Date();
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateKey = date.toDateString();
+            
+            if (hourlyData[dateKey]) {
+                const dailySteps = Object.values(hourlyData[dateKey])
+                    .reduce((sum, steps) => sum + steps, 0);
+                weeklySteps.push(dailySteps);
+            } else {
+                weeklySteps.push(0);
+            }
+        }
+        
+        return weeklySteps;
     }
 
     updateActivityRings() {
@@ -72,90 +246,81 @@ class ReportPage {
         `;
     }
 
-    updateTrends() {
-        const state = JSON.parse(localStorage.getItem('stepCounterState')) || { steps: 0 };
-        const minutes = Math.round(state.steps * 0.0166);
-        const distance = (state.steps * 0.0007).toFixed(1);
-        const pace = ((minutes / distance) || 0).toFixed(1);
-
+    updateTrends(data) {
+        const pace = data.minutes > 0 ? (data.distance / (data.minutes / 60)).toFixed(1) : 0;
+        
         const trends = [
-            { label: 'Stand', value: '12HR/DAY', trend: 'up' },
-            { label: 'Exercise', value: `${minutes}MIN/DAY`, trend: 'up' },
-            { label: 'Distance', value: `${distance}MI/DAY`, trend: minutes > 30 ? 'up' : 'down' },
-            { label: 'Walking Pace', value: `${pace}MIN/MI`, trend: 'up' }
+            { 
+                label: 'Stand', 
+                value: `${data.hours}/12 HR/DAY`, 
+                trend: data.hours >= 8 ? 'up' : 'down'
+            },
+            { 
+                label: 'Exercise', 
+                value: `${data.minutes} MIN/DAY`, 
+                trend: data.minutes >= 30 ? 'up' : 'down'
+            },
+            { 
+                label: 'Distance', 
+                value: `${data.distance} KM/DAY`, 
+                trend: data.distance >= 5 ? 'up' : 'down'
+            },
+            { 
+                label: 'Walking Pace', 
+                value: `${pace} KM/H`, 
+                trend: pace >= 4 ? 'up' : 'down'
+            }
         ];
 
-        const trendGrid = document.querySelector('.trend-grid');
+        const trendGrid = document.querySelector('.trends-grid');
         trendGrid.innerHTML = trends.map(trend => `
             <div class="trend-item">
-                <span class="trend-icon ${trend.trend}">
-                    ${trend.trend === 'up' ? '↑' : '↓'}
-                </span>
+                <div class="trend-icon ${trend.trend}">
+                    <i class="fas fa-arrow-${trend.trend}"></i>
+                </div>
                 <div class="trend-info">
-                    <span class="label">${trend.label}</span>
-                    <span class="value">${trend.value}</span>
+                    <span class="trend-label">${trend.label}</span>
+                    <span class="trend-value">${trend.value}</span>
                 </div>
             </div>
         `).join('');
     }
 
     initializeCharts() {
-        this.createHourlyStepsChart();
-        this.createHourlyDistanceChart();
-        this.createPaceChart();
-    }
-
-    createHourlyStepsChart() {
-        const ctx = document.getElementById('hourlyStepsChart');
-        if (!ctx) return;
-
-        const stepsData = JSON.parse(localStorage.getItem('stepsData')) || {
-            hourly: {},
-            daily: {},
-            weekly: {}
-        };
-
+        // Get stored hourly data
+        const hourlyData = JSON.parse(localStorage.getItem('hourlyStepsData')) || {};
+        const today = new Date().toDateString();
+        const todayData = hourlyData[today] || {};
+        
+        // Get current hour for proper time labels
         const now = new Date();
-        const currentDate = now.toDateString();
         const currentHour = now.getHours();
         
-        // Generate dummy data for testing
-        const last24Hours = Array.from({length: 24}, (_, i) => {
+        // Generate labels for last 24 hours
+        const labels = Array.from({length: 24}, (_, i) => {
             const hour = (currentHour - 23 + i + 24) % 24;
-            const hourKey = `${hour}:00`;
-            
-            // Generate random steps between 100 and 1000 for testing
-            return {
-                hour: hourKey,
-                steps: Math.floor(Math.random() * 900) + 100
-            };
+            return `${hour}:00`;
         });
 
-        // Calculate percentage change
-        const previousTotal = last24Hours.slice(0, 12)
-            .reduce((sum, hour) => sum + hour.steps, 0);
-        const currentTotal = last24Hours.slice(12)
-            .reduce((sum, hour) => sum + hour.steps, 0);
-        const percentChange = previousTotal > 0 ? 
-            ((currentTotal - previousTotal) / previousTotal * 100).toFixed(0) : 0;
+        // Get actual data or use 0 for empty hours
+        const data = labels.map(hour => todayData[hour] || 0);
+        
+        // Use fake data if no steps recorded today
+        const hasData = Object.values(todayData).some(v => v > 0);
+        const chartData = hasData ? data : labels.map(() => Math.floor(Math.random() * 1000) + 100);
 
-        // Update trend value
-        const trendValue = document.querySelector('.trend-value');
-        if (trendValue) {
-            const isIncrease = percentChange >= 0;
-            trendValue.textContent = `${isIncrease ? '↑' : '↓'} ${Math.abs(percentChange)}%`;
-            trendValue.style.color = isIncrease ? '#32d74b' : '#ff453a';
-        }
+        const ctx = document.getElementById('hourlyStepsChart');
+        if (!ctx) return;
 
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: last24Hours.map(h => h.hour),
+                labels: labels,
                 datasets: [{
-                    data: last24Hours.map(h => h.steps),
-                    backgroundColor: '#007AFF',
-                    borderRadius: 6,
-                    borderSkipped: false,
+                    label: 'Steps',
+                    data: chartData,
+                    backgroundColor: hasData ? '#32d74b' : '#8e8e93',
+                    borderRadius: 4,
                     barThickness: 8
                 }]
             },
@@ -163,22 +328,15 @@ class ReportPage {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
-                        enabled: true,
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: '#1c1c1e',
-                        titleColor: '#ffffff',
-                        bodyColor: '#8e8e93',
-                        borderColor: '#333333',
-                        borderWidth: 1,
-                        padding: 10,
-                        displayColors: false,
                         callbacks: {
-                            label: (context) => `${context.raw} steps`
+                            title: (items) => {
+                                return `Hour: ${items[0].label}`;
+                            },
+                            label: (item) => {
+                                return `Steps: ${item.raw.toLocaleString()}`;
+                            }
                         }
                     }
                 },
@@ -186,40 +344,27 @@ class ReportPage {
                     y: {
                         beginAtZero: true,
                         grid: {
-                            display: false
-                        },
-                        ticks: {
-                            display: false
-                        },
-                        border: {
-                            display: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
+                            color: 'rgba(255, 255, 255, 0.1)'
                         },
                         ticks: {
                             color: '#8e8e93',
-                            font: { size: 10 },
+                            font: { size: 12 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#8e8e93',
+                            font: { size: 12 },
                             maxTicksLimit: 6,
-                            padding: 8,
-                            callback: function(val, index) {
-                                // Show fewer x-axis labels
-                                return index % 4 === 0 ? this.getLabelForValue(val) : '';
-                            }
-                        },
-                        border: {
-                            display: false
+                            maxRotation: 0
                         }
                     }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
                 }
             }
         });
+        this.createHourlyDistanceChart();
+        this.createPaceChart();
     }
 
     createHourlyDistanceChart() {
@@ -390,13 +535,7 @@ class ReportPage {
 
 // Initialize the report page
 document.addEventListener('DOMContentLoaded', () => {
-    // Load saved data
-    const savedData = localStorage.getItem('stepCounterData');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        updateStats(data);
-        initializeHourlyChart();
-    }
+    new ReportPage();
 });
 
 function updateStats(data) {
