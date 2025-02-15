@@ -82,11 +82,11 @@ class StepTracker {
         // Load saved data
         this.loadSavedData();
 
-        // Initialize bots with proper selectors and different speeds
+        // Initialize bots with proper selectors and slower speeds
         this.bots = [
-            { element: document.querySelector('.bot-dot.bot1'), progress: 0, speed: 0.0008 },
-            { element: document.querySelector('.bot-dot.bot2'), progress: 0, speed: 0.0011 },
-            { element: document.querySelector('.bot-dot.bot3'), progress: 0, speed: 0.0014 }
+            { element: document.querySelector('.bot-dot.bot1'), progress: 0, speed: 0.0003 },
+            { element: document.querySelector('.bot-dot.bot2'), progress: 0, speed: 0.0004 },
+            { element: document.querySelector('.bot-dot.bot3'), progress: 0, speed: 0.0005 }
         ];
         
         // Initialize bot positions but don't start animation
@@ -372,13 +372,34 @@ class StepTracker {
 
     resetSteps() {
         if (confirm('Are you sure you want to reset your steps to zero?')) {
+            // Reset steps and storage
             this.steps = 0;
             localStorage.setItem('stepCounterData', JSON.stringify({
                 steps: 0,
                 lastUpdated: Date.now()
             }));
-            this.updateDisplays();
-            this.menuDropdown.classList.remove('show');
+            
+            // Reset progress and player dot position
+            const progress = document.querySelector('.progress');
+            const trackDot = document.querySelector('.track-dot');
+            const track = document.querySelector('.track');
+            
+            if (progress && trackDot && track) {
+                // Reset progress path
+                progress.style.strokeDasharray = track.getTotalLength();
+                progress.style.strokeDashoffset = track.getTotalLength();
+                
+                // Reset player dot to start position
+                const startPoint = track.getPointAtLength(0);
+                trackDot.style.left = `${startPoint.x}px`;
+                trackDot.style.top = `${startPoint.y}px`;
+                trackDot.style.transform = 'translate(-50%, -50%)';
+                trackDot.classList.remove('complete');
+                
+                // Reset finish flag animation
+                const flag = document.querySelector('.flag');
+                if (flag) flag.style.animation = 'none';
+            }
             
             // Reset bot positions
             this.resetBotPositions();
@@ -401,6 +422,9 @@ class StepTracker {
                 item.querySelector('.time').textContent = '--:--';
             });
             
+            // Update displays
+            this.updateDisplays();
+            this.menuDropdown.classList.remove('show');
             this.showFeedback('Steps reset successfully');
         }
     }
@@ -441,8 +465,11 @@ class StepTracker {
             bot.element.style.top = `${point.y}px`;
             bot.element.style.transform = 'translate(-50%, -50%)';
             
-            // Assign different speeds to each bot
-            bot.speed = 0.0005 + (index * 0.0003);
+            // Reset any visual states
+            bot.element.classList.remove('passing');
+            
+            // Assign different but slower speeds to each bot
+            bot.speed = 0.0002 + (index * 0.0001);
         });
     }
 
@@ -455,17 +482,17 @@ class StepTracker {
         const updateBot = (bot) => {
             if (!bot.element) return;
             
-            // Update progress and wrap around
-            bot.progress += bot.speed;
-            
-            // Check for race completion
-            if (bot.progress >= 1 && !this.raceResults.includes(bot)) {
-                this.raceResults.push(bot);
-                this.updateLeaderboard();
+            // Only update progress if bot hasn't finished
+            if (!this.raceResults.includes(bot)) {
+                bot.progress += bot.speed;
+                
+                // Check for race completion
+                if (bot.progress >= 1) {
+                    bot.progress = 1; // Stop at finish line
+                    this.raceResults.push(bot);
+                    this.updateLeaderboard();
+                }
             }
-            
-            // Reset progress after recording finish
-            if (bot.progress >= 1) bot.progress = 0;
             
             // Get current point on path
             const point = track.getPointAtLength(pathLength * bot.progress);
